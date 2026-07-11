@@ -73,6 +73,30 @@ def test_publish_uploads_markdown_and_image_and_returns_paths():
     assert mock_repo.create_file.call_count == 2
 
 
+def test_publish_when_image_download_fails_uploads_markdown_only():
+    published_at = datetime(2026, 7, 11, 14, 30, tzinfo=KST)
+    mock_repo = Mock()
+    mock_repo.create_file.return_value = {"commit": Mock(sha="md-commit-sha")}
+    mock_github_instance = Mock()
+    mock_github_instance.get_repo.return_value = mock_repo
+
+    with patch("blog_pipeline.publisher.Github", return_value=mock_github_instance), \
+         patch("blog_pipeline.publisher.requests.get", side_effect=Exception("network error")):
+        result = publisher.publish(
+            keyword="천궁",
+            title="제목",
+            body_markdown="본문",
+            image_url="https://example.com/photo.jpg",
+            github_token="token",
+            github_owner="ddastudio140",
+            github_repo="blog-post",
+            published_at=published_at,
+        )
+
+    assert result["image_path"] is None
+    assert mock_repo.create_file.call_count == 1
+
+
 def test_publish_without_image_url_skips_image_upload():
     published_at = datetime(2026, 7, 11, 14, 30, tzinfo=KST)
     mock_repo = Mock()
