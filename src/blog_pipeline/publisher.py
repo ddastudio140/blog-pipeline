@@ -22,11 +22,19 @@ def _download_image(image_url: str) -> tuple[bytes, str] | None:
     return response.content, extension
 
 
+def _sanitize_keyword_for_path(keyword: str) -> str:
+    # 경로 구분자와 상위 디렉토리 이동 시퀀스를 제거
+    sanitized = re.sub(r"[/\\]", "_", keyword)
+    sanitized = sanitized.replace("..", "_")
+    return sanitized
+
+
 def _build_paths(keyword: str, published_at: datetime, image_ext: str | None) -> tuple[str, str | None]:
+    safe_keyword = _sanitize_keyword_for_path(keyword)
     date_dir = published_at.strftime("%Y%m%d")
     time_prefix = published_at.strftime("%H%M")
-    md_path = f"posts/{date_dir}/{time_prefix}_{keyword}.md"
-    image_path = f"posts/{date_dir}/{time_prefix}_{keyword}.{image_ext}" if image_ext else None
+    md_path = f"posts/{date_dir}/{time_prefix}_{safe_keyword}.md"
+    image_path = f"posts/{date_dir}/{time_prefix}_{safe_keyword}.{image_ext}" if image_ext else None
     return md_path, image_path
 
 

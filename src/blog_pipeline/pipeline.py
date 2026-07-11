@@ -10,6 +10,8 @@ KST = timezone(timedelta(hours=9))
 
 
 def run(settings: Settings, manual_keyword: str | None = None) -> dict:
+    storage.init_db(settings.db_path)
+
     keyword = keyword_source.select_keyword(settings.db_path, manual_keyword)
     if keyword is None:
         return {"status": "no_keyword", "keyword": None, "file_path": None}

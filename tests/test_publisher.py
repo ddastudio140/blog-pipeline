@@ -26,6 +26,29 @@ def test_build_paths_without_image():
     assert image_path is None
 
 
+def test_build_paths_sanitizes_path_traversal_keyword():
+    published_at = datetime(2026, 7, 11, 14, 30, tzinfo=KST)
+
+    md_path, image_path = publisher._build_paths("../../secret", published_at, "jpg")
+
+    assert md_path.startswith("posts/20260711/")
+    assert ".." not in md_path
+    assert "/" not in md_path[len("posts/20260711/"):]
+    assert image_path.startswith("posts/20260711/")
+    assert ".." not in image_path
+    assert "/" not in image_path[len("posts/20260711/"):]
+
+
+def test_build_paths_sanitizes_backslashes_in_keyword():
+    published_at = datetime(2026, 7, 11, 14, 30, tzinfo=KST)
+
+    md_path, _ = publisher._build_paths("..\\..\\windows_secret", published_at, None)
+
+    assert md_path.startswith("posts/20260711/")
+    assert "\\" not in md_path
+    assert ".." not in md_path
+
+
 def test_download_image_returns_bytes_and_extension():
     mock_response = Mock()
     mock_response.content = b"fake-image-bytes"

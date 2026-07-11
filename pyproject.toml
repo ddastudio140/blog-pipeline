@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.scripts]
-blog-pipeline = "blog_pipeline:main"
+blog-pipeline = "blog_pipeline.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.8.4,<0.9.0"]

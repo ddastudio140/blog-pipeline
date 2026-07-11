@@ -70,3 +70,29 @@ def test_run_full_success_path_calls_all_steps_and_saves_post(settings):
     posts = storage.get_recent_posts(settings.db_path, limit=5)
     assert len(posts) == 1
     assert posts[0]["title"] == "생성된 제목"
+
+
+def test_run_initializes_db_automatically_on_fresh_path(tmp_path):
+    fresh_db_path = str(tmp_path / "fresh.db")  # init_db() 호출 안 함
+    fresh_settings = Settings(
+        naver_client_id="cid",
+        naver_client_secret="csecret",
+        nvidia_api_key="nkey",
+        nvidia_model="meta/llama-3.1-70b-instruct",
+        github_token="gtoken",
+        github_owner="ddastudio140",
+        github_repo="blog-post",
+        webhook_api_key="wkey",
+        schedule_interval_minutes=60,
+        db_path=fresh_db_path,
+    )
+
+    with patch("blog_pipeline.pipeline.keyword_source.select_keyword", return_value="천궁"), \
+         patch("blog_pipeline.pipeline.news_collector.collect", return_value=SAMPLE_SOURCES), \
+         patch("blog_pipeline.pipeline.post_writer.generate_post", return_value=GENERATED_POST), \
+         patch("blog_pipeline.pipeline.publisher.publish", return_value=PUBLISH_RESULT):
+        result = pipeline.run(fresh_settings, manual_keyword="천궁")
+
+    assert result["status"] == "published"
+    posts = storage.get_recent_posts(fresh_db_path, limit=5)
+    assert len(posts) == 1

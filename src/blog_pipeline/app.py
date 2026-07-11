@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import threading
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -8,6 +9,8 @@ from pydantic import BaseModel
 
 from blog_pipeline import pipeline
 from blog_pipeline.config import Settings
+
+logger = logging.getLogger(__name__)
 
 
 class KeywordRequest(BaseModel):
@@ -59,5 +62,7 @@ def _run_scheduled(app: FastAPI) -> None:
         return
     try:
         pipeline.run(app.state.settings)
+    except Exception:  # noqa: BLE001
+        logger.exception("scheduled pipeline run failed")
     finally:
         app.state.pipeline_lock.release()
