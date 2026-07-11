@@ -1,0 +1,951 @@
+{
+  "name": "auto-blog",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "e99a4efe-ef96-47e4-8a8e-f245b76d91c1",
+      "name": "manual_start",
+      "position": [
+        -1824,
+        0
+      ],
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "017b54f4-daba-420d-bfd1-608a1d8ff54c",
+              "name": "keyword",
+              "type": "string",
+              "value": "천궁"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "850f8eb7-bd17-4132-9046-9b2cf06b0d4b",
+      "name": "set_manual_keyword",
+      "position": [
+        -1600,
+        0
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "url": "https://openapi.naver.com/v1/search/news.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.keyword }}"
+            },
+            {
+              "name": "display",
+              "value": "30"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Naver-Client-Id",
+              "value": "U9eXLzBScrp310K0M3ET"
+            },
+            {
+              "name": "X-Naver-Client-Secret",
+              "value": "KRgWwRNsMs"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6c0dca54-1e8d-4053-8ad5-e0ab4bf21de4",
+      "name": "http_naver_search",
+      "position": [
+        -448,
+        0
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "ce77ca84-60a1-49fb-9359-31836b88288b",
+      "name": "split_items",
+      "position": [
+        -272,
+        0
+      ],
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ddastudio140"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "blog-post"
+        },
+        "filePath": "=posts/{{ $now.format('yyyyMMdd') }}/{{ $now.format('HHmm') }}_{{ $('merge_keyword_source').first().json.keyword }}.md",
+        "fileContent": "={{ $json.stdout }}",
+        "commitMessage": "=[Auto] {{ $('merge_keyword_source').first().json.keyword }} 블로그 포스트 - {{ $now.format('yyyy-MM-dd HH:mm') }}"
+      },
+      "id": "10a7ce22-1148-4406-a7a4-92de5b2f00b5",
+      "name": "github_upload",
+      "position": [
+        1728,
+        -16
+      ],
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "webhookId": "0c790521-209d-4cbf-98a3-3970660f32ef",
+      "credentials": {
+        "githubApi": {
+          "id": "bu1WQr2mbQSjA9SD",
+          "name": "ddatudio140"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b70915d1-e43c-415f-a1ce-353f23d59c5a",
+              "leftValue": "={{ $json.link }}",
+              "operator": {
+                "operation": "startsWith",
+                "type": "string"
+              },
+              "rightValue": "https://n.news.naver.com"
+            },
+            {
+              "id": "9efe2237-b56a-4a49-945a-d13fd100cb9f",
+              "leftValue": "={{ $json.link }}",
+              "operator": {
+                "operation": "startsWith",
+                "type": "string"
+              },
+              "rightValue": "https://m.sports.naver.com"
+            },
+            {
+              "id": "f5dc19be-dc83-4ffd-b24c-43cfb8da7ce6",
+              "leftValue": "={{ $json.link }}",
+              "rightValue": "https://m.entertain.naver.com/",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "ff09f6d6-1e1e-4b66-b48a-27569ad5e87b",
+      "name": "filter_naver_link",
+      "position": [
+        -96,
+        0
+      ],
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "id": "d7c633d8-0742-4dad-bed6-9af37672bd53",
+      "name": "limit_5_items",
+      "position": [
+        80,
+        0
+      ],
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "id": "ea995ad2-ba6b-4a08-8428-9e587e0f4703",
+      "name": "http_get_body",
+      "position": [
+        256,
+        0
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "body",
+              "cssSelector": "#dic_area"
+            },
+            {
+              "key": "title",
+              "cssSelector": "#title_area"
+            },
+            {
+              "key": "imge",
+              "cssSelector": "meta[property=\"og:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b03e25c3-c197-4e64-b8ce-e90a3ad51232",
+      "name": "html_naver_general",
+      "position": [
+        688,
+        -176
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "01e73d5b-42e0-4e46-9eb7-3bd68f9428b5",
+      "name": "aggregate_all",
+      "position": [
+        1184,
+        -16
+      ],
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\n\n// -----------------------------------------------------------\n// 1. 기본 데이터 및 키워드 준비\n// -----------------------------------------------------------\nconst inputData = $input.first()?.json?.data || [];\nconst keyword = $node[\"merge_keyword_source\"].json.keyword;\n// 파일명에 쓸 수 있도록 공백을 언더바(_)로 치환\nconst safeKeyword = keyword ? keyword.replace(/ /g, '_') : 'no_keyword';\n\n// -----------------------------------------------------------\n// 2. 날짜 및 시간 계산 (KST 기준)\n// -----------------------------------------------------------\nconst date = new Date();\nconst kstOffset = 9 * 60; // UTC+9\nconst kstDate = new Date(date.getTime() + (kstOffset * 60 * 1000));\n\nconst yyyy = kstDate.getUTCFullYear();\nconst mm = String(kstDate.getUTCMonth() + 1).padStart(2, '0');\nconst dd = String(kstDate.getUTCDate()).padStart(2, '0');\nconst HH = String(kstDate.getUTCHours()).padStart(2, '0');\nconst MM = String(kstDate.getUTCMinutes()).padStart(2, '0');\n\n// 예: 20260125\nconst dateDir = `${yyyy}${mm}${dd}`;\n\n// -----------------------------------------------------------\n// 3. 디렉토리 생성 및 파일 경로 설정\n// -----------------------------------------------------------\nconst baseDir = '/home/node/blog-posts';\nconst targetDir = `${baseDir}/${dateDir}`; // /home/node/blog-posts/20260125\n\n// 🌟 핵심: 디렉토리가 없으면 생성 (이미 있으면 무시)\ntry {\n  execSync(`mkdir -p ${targetDir}`);\n} catch (e) {\n  console.error(`Failed to create directory: ${targetDir}`, e);\n}\n\n// 소스 파일명: 1430_서울_부동산_sources.json\nconst sourceFileName = `${HH}${MM}_${safeKeyword}_sources.json`;\nconst tempFilePath = `${targetDir}/${sourceFileName}`;\n\n// -----------------------------------------------------------\n// 4. JSON 파일 저장\n// -----------------------------------------------------------\nconst articles = inputData.map((item, index) => ({\n  번호: index + 1,\n  제목: item.title || '제목 없음',\n  본문: item.body || '본문 없음',\n  이미지: item.imge || ''\n}));\n\nconst articlesJson = JSON.stringify(articles, null, 2);\n\n// 지정한 경로에 바로 저장\nexecSync(`cat > \"${tempFilePath}\"`, { input: articlesJson });\n\n\n// -----------------------------------------------------------\n// 5. 이미지 경로 및 기타 정보 반환 (다음 노드용)\n// -----------------------------------------------------------\nconst mainImageUrl = articles[0]?.이미지 || '';\nlet extension = 'jpg';\nif (mainImageUrl) {\n  const match = mainImageUrl.match(/\\.(jpg|jpeg|png|webp|gif|bmp)($|\\?)/i);\n  if (match) extension = match[1].toLowerCase();\n}\n\n// 이미지 파일명도 동일한 규칙 적용 (1430_서울_부동산.jpg)\nconst imageFileName = `${HH}${MM}_${safeKeyword}.${extension}`;\nconst localImageFullPath = `${targetDir}/${imageFileName}`;\nconst repoImageFilePath = `posts/${dateDir}/${imageFileName}`;\n\nreturn {\n  // 기존 출력 유지\n  articles,\n  articleCount: articles.length,\n  mainImageUrl,\n  imageExtension: extension,\n  safeKeyword,\n  \n  // 🌟 업데이트된 경로 정보\n  tempFilePath,       // Gemini가 읽을 소스 파일 경로\n  \n  // 다음 단계(이미지 다운로드 및 업로드)에서 사용할 변수\n  targetDir,          // 저장된 디렉토리\n  localImageFullPath, // 저장할 이미지 전체 경로\n  repoImageFilePath,  // Git에 올릴 때 쓸 상대 경로\n  imageFileName       // 이미지 파일명\n};"
+      },
+      "id": "67ef93b0-68a8-49f4-a506-09591e65cdfd",
+      "name": "code_format_data",
+      "position": [
+        1360,
+        -16
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "command": "=echo \"\" | gemini -p \"아래는 뉴스 데이터입니다:\\n$(cat {{ $json.tempFilePath }})\\n위 뉴스 데이터를 기반으로 블로그 글을 작성해주세요.\\n@/home/node/prompts/generate-post-prompt-gemini.md\""
+      },
+      "id": "594ed85d-751c-408a-aa9f-36aa347eb4e2",
+      "name": "cmd_gemini_gen",
+      "position": [
+        1552,
+        -16
+      ],
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "https://zum.com/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "81a87e70-f51f-49cb-85d4-5f4d0327b273",
+      "name": "http_zum_trend",
+      "position": [
+        -1648,
+        -208
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "keywords",
+              "cssSelector": ".issue-word-list__keyword",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6236c8df-0380-4aae-a269-8611f6da98f0",
+      "name": "html_zum_keywords",
+      "position": [
+        -1472,
+        -208
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "jsCode": "// 2일간(오늘+어제) 중복을 방지하는 영구 저장 로직\nconst { execSync } = require('child_process');\nconst filePath = '/home/node/workflows/processed_keywords.json';\n\n// 1. 기존 데이터 읽기\nlet processed = [];\ntry {\n  const fileContent = execSync(`cat ${filePath} 2>/dev/null || echo \"[]\"`).toString();\n  processed = JSON.parse(fileContent);\n  if (!Array.isArray(processed)) {\n    console.error('Invalid data format, resetting to empty array');\n    processed = [];\n  }\n} catch (e) {\n  console.error('File read/parse error:', e.message);\n  processed = [];\n}\n\n// 2. 날짜 정보 계산 (KST 기준)\nconst now = new Date();\nconst kstOffset = 9 * 60; // UTC+9\nconst kstNow = new Date(now.getTime() + kstOffset * 60 * 1000);\n\nconst today = new Date(kstNow);\nconst yesterday = new Date(kstNow);\nyesterday.setDate(yesterday.getDate() - 1);\n\nconst todayStr = today.toISOString().split('T')[0];\nconst yesterdayStr = yesterday.toISOString().split('T')[0];\n\n// 3. 오래된 데이터 정리 (어제 이전 데이터 제거)\nconst originalCount = processed.length;\nprocessed = processed.filter(entry => {\n  if (typeof entry !== 'string' || !entry.includes('_')) return false;\n  const entryDate = entry.split('_')[0];\n  return entryDate >= yesterdayStr;\n});\nconsole.log(`Cleaned ${originalCount - processed.length} old entries`);\n\n// 4. 키워드 정제\nconst inputData = $input.first();\nif (!inputData || !inputData.json) {\n  return {\n    keyword: \"입력 데이터 없음\",\n    status: \"no_input\",\n    tracked_count: processed.length\n  };\n}\n\nconst rawKeywords = inputData.json.keywords || [];\nconst cleanedKeywords = rawKeywords\n  .map(text => text.trim())\n  .filter(k => k.length > 0);\n\n// 5. 중복 체크\nlet selectedKeyword = null;\nfor (const keyword of cleanedKeywords) {\n  const todayKey = `${todayStr}_${keyword}`;\n  const yesterdayKey = `${yesterdayStr}_${keyword}`;\n  \n  const isTodayMatch = processed.includes(todayKey);\n  const isYesterdayMatch = processed.includes(yesterdayKey);\n  \n  if (!isTodayMatch && !isYesterdayMatch) {\n    selectedKeyword = keyword;\n    processed.push(todayKey);\n    break;\n  }\n}\n\n// 6. 저장 (데이터가 변경되었으면 항상 저장)\ntry {\n  const jsonData = JSON.stringify(processed);\n  execSync(`cat > ${filePath}`, { input: jsonData });\n} catch (e) {\n  console.error('File write error:', e.message);\n}\n\n// 7. 결과 반환\nreturn {\n  keyword: selectedKeyword || \"no_keyword\",\n  status: selectedKeyword ? \"success\" : \"all_skipped\",\n  tracked_count: processed.length,\n  today: todayStr,\n  cleaned_count: originalCount - processed.length\n};"
+      },
+      "id": "aae1c44c-f6d4-4411-80bd-706d46b6279b",
+      "name": "code_select_keyword",
+      "position": [
+        -1296,
+        -208
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "2f8238b8-c775-49cc-92c9-45c78a234fc4",
+      "name": "cron_hourly",
+      "position": [
+        -1840,
+        -208
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "22b3cb50-995e-4844-b926-4ca88e19b9ca",
+      "name": "merge_keyword_source",
+      "position": [
+        -1024,
+        -16
+      ],
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('limit_5_items').item.json.link }}",
+                    "rightValue": "https://n.news.naver.com/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "107cdd17-0224-4445-9d5e-a2fde252d9aa"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "n.news"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "910f87eb-79e3-407b-9f60-33b3cb36f579",
+                    "leftValue": "={{ $('limit_5_items').item.json.link }}",
+                    "rightValue": "https://m.sports.naver.com/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "s.news"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "93e09c0b-72d8-48dd-aa5c-9cd842c30d87",
+                    "leftValue": "={{ $('limit_5_items').item.json.link }}",
+                    "rightValue": "https://m.entertain.naver.com/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "e.news"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "af0f0260-cfd5-4caf-b96e-87ce52016510",
+      "name": "switch_news_type",
+      "position": [
+        448,
+        -16
+      ],
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "body",
+              "cssSelector": "._article_content"
+            },
+            {
+              "key": "title",
+              "cssSelector": "h2"
+            },
+            {
+              "key": "imge",
+              "cssSelector": "meta[property=\"og:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6645c508-b16d-45d5-a734-0625a195accf",
+      "name": "html_naver_sports",
+      "position": [
+        688,
+        0
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {},
+      "id": "f151d035-6df3-4247-b3d0-55025991be26",
+      "name": "merge_parsed",
+      "position": [
+        976,
+        -16
+      ],
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "auto-blog",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "8c5c2a69-a611-4f8b-bf8d-acefbfbe5c06",
+      "name": "webhook_trigger",
+      "position": [
+        -1824,
+        208
+      ],
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "webhookId": "191501fc-bcab-4b62-8d15-629e9b39c07b",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zuj4RLVYBr4ivGO0",
+          "name": "Blog API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Webhook으로 받은 데이터에서 전체 JSON 데이터 추출\nconst inputData = $input.first()?.json || {};\n\n// 2. body 내부 혹은 최상위 depth에서 keyword 탐색\nlet keyword = inputData.body?.keyword || inputData.keyword;\n\n// 3. 키워드 존재 여부 확인 및 'no_keyword' 할당\nif (!keyword || keyword.trim().length === 0) {\n  // 키워드가 없으면 keyword 필드에 직접 \"no_keyword\" 문자열 삽입\n  keyword = \"no_keyword\";\n} else {\n  // 키워드가 있으면 양 끝 공백 제거\n  keyword = keyword.trim();\n}\n\n// 4. 결과 반환\nreturn {\n  keyword: keyword,\n  status: (keyword === \"no_keyword\") ? \"no_keyword\" : \"success\"\n};"
+      },
+      "id": "ba3163f1-7e44-47e8-a147-657ae5bdee9e",
+      "name": "code_webhook_payload",
+      "position": [
+        -1584,
+        208
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ddastudio140"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "blog-post"
+        },
+        "filePath": "=posts/{{ $now.format('yyyyMMdd') }}/{{ $now.format('HHmm') }}_no_keyword.md",
+        "fileContent": "=No new keywords were found for this cycle.",
+        "commitMessage": "=[Auto] No target keywords found - {{ $now.format('yyyy-MM-dd HH:mm') }}"
+      },
+      "id": "github_no_keyword_id_12345",
+      "name": "github_no_keyword",
+      "position": [
+        -784,
+        272
+      ],
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "webhookId": "c680e492-1309-4cbe-a520-e4103d792ec2",
+      "credentials": {
+        "githubApi": {
+          "id": "bu1WQr2mbQSjA9SD",
+          "name": "ddatudio140"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "22b7ff71-c5ce-4702-9e1e-e5017909476e",
+              "leftValue": "={{ $json.keyword }}",
+              "rightValue": "no_keyword",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "ae614b9a-2308-4147-b734-9dc7e71b95ec",
+              "leftValue": "={{ $json.keyword }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        0
+      ],
+      "id": "18061f97-32bc-42a5-8b2b-c00257784012",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "=body",
+              "cssSelector": "div._article_content"
+            },
+            {
+              "key": "title",
+              "cssSelector": "meta[property=\"og:title\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            },
+            {
+              "key": "imge",
+              "cssSelector": "div._article_content img",
+              "returnValue": "attribute",
+              "attribute": "src"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ddf760c7-a035-4155-a267-eedfaed1d8c4",
+      "name": "html_naver_entertainment",
+      "position": [
+        688,
+        192
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "aggregate_all": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "code_format_data",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "cmd_gemini_gen": {
+      "main": [
+        [
+          {
+            "node": "github_upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code_format_data": {
+      "main": [
+        [
+          {
+            "node": "cmd_gemini_gen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "code_select_keyword": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "merge_keyword_source",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "code_webhook_payload": {
+      "main": [
+        [
+          {
+            "index": 2,
+            "node": "merge_keyword_source",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "cron_hourly": {
+      "main": [
+        [
+          {
+            "node": "http_zum_trend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter_naver_link": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "limit_5_items",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "github_no_keyword": {
+      "main": [
+        []
+      ]
+    },
+    "github_upload": {
+      "main": [
+        []
+      ]
+    },
+    "html_naver_general": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "merge_parsed",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "html_naver_sports": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "merge_parsed",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "html_zum_keywords": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "code_select_keyword",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "http_get_body": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "switch_news_type",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "http_naver_search": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "split_items",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "http_zum_trend": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "html_zum_keywords",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "limit_5_items": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "http_get_body",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "manual_start": {
+      "main": [
+        [
+          {
+            "node": "set_manual_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_keyword_source": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_parsed": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "aggregate_all",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "set_manual_keyword": {
+      "main": [
+        [
+          {
+            "index": 1,
+            "node": "merge_keyword_source",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "split_items": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "filter_naver_link",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "switch_news_type": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "html_naver_general",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "node": "html_naver_sports",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "html_naver_entertainment",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        []
+      ]
+    },
+    "webhook_trigger": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "code_webhook_payload",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "github_no_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "http_naver_search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html_naver_entertainment": {
+      "main": [
+        [
+          {
+            "node": "merge_parsed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Seoul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "versionId": "a1315360-9d3c-4f87-aeb1-a312bc800251",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0e79e7a9c8f52194a84235b02c5ec18a4ceb826bb02bff0e66711cd41ed027"
+  },
+  "id": "g3dcURMYzUS6ADy_9Ccnc",
+  "tags": []
+}
