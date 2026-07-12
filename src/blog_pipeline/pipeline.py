@@ -12,6 +12,7 @@ KST = timezone(timedelta(hours=9))
 logger = logging.getLogger("blog_pipeline.pipeline")
 
 TOTAL_STEPS = 6
+SEPARATOR = "=" * 70
 
 
 def _step(n: int, run_id: str, keyword: str | None, message: str) -> None:
@@ -21,6 +22,8 @@ def _step(n: int, run_id: str, keyword: str | None, message: str) -> None:
 def run(settings: Settings, manual_keyword: str | None = None) -> dict:
     run_id = str(uuid.uuid4())
     started_at = time.monotonic()
+
+    logger.info(SEPARATOR)
     logger.info(
         "파이프라인 실행 시작 (run_id=%s, manual_keyword=%s, 총 %d단계)",
         run_id,
@@ -28,6 +31,15 @@ def run(settings: Settings, manual_keyword: str | None = None) -> dict:
         TOTAL_STEPS,
     )
 
+    try:
+        return _run_steps(settings, manual_keyword, run_id)
+    finally:
+        elapsed = time.monotonic() - started_at
+        logger.info("파이프라인 실행 종료: %.1f초 소요 (run_id=%s)", elapsed, run_id)
+        logger.info(SEPARATOR)
+
+
+def _run_steps(settings: Settings, manual_keyword: str | None, run_id: str) -> dict:
     storage.init_db(settings.db_path)
 
     keyword = keyword_source.select_keyword(settings.db_path, manual_keyword)
@@ -81,10 +93,5 @@ def run(settings: Settings, manual_keyword: str | None = None) -> dict:
         published_at=published_at.isoformat(),
     )
     _step(6, run_id, keyword, "게시글 메타데이터 DB 저장 완료")
-
-    elapsed = time.monotonic() - started_at
-    logger.info(
-        "파이프라인 실행 완료: keyword=%s, %.1f초 소요 (run_id=%s)", keyword, elapsed, run_id
-    )
 
     return {"status": "published", "keyword": keyword, "file_path": publish_result["file_path"]}
