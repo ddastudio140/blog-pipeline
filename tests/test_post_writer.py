@@ -55,7 +55,9 @@ def test_call_nvidia_api_returns_content_on_success():
         mock_client = mock_openai_cls.return_value
         mock_client.chat.completions.create.return_value = mock_response
 
-        result = post_writer._call_nvidia_api("프롬프트", api_key="key", model="meta/llama-3.1-70b-instruct")
+        result = post_writer._call_nvidia_api(
+            "프롬프트", api_key="key", model="meta/llama-3.1-70b-instruct", keyword="테스트키워드"
+        )
 
     assert result == RAW_RESPONSE
 
@@ -66,7 +68,9 @@ def test_call_nvidia_api_retries_once_then_raises():
         mock_client.chat.completions.create.side_effect = Exception("api error")
 
         with pytest.raises(Exception, match="api error"):
-            post_writer._call_nvidia_api("프롬프트", api_key="key", model="meta/llama-3.1-70b-instruct")
+            post_writer._call_nvidia_api(
+                "프롬프트", api_key="key", model="meta/llama-3.1-70b-instruct", keyword="테스트키워드"
+            )
 
     assert mock_client.chat.completions.create.call_count == 2
 

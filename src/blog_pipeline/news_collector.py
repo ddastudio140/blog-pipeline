@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta, timezone
 
 import requests
 from bs4 import BeautifulSoup
 
 KST = timezone(timedelta(hours=9))
+logger = logging.getLogger("blog_pipeline.news_collector")
 SEARCH_URL = "https://openapi.naver.com/v1/search/news.json"
 ALLOWED_DOMAINS = (
     "https://n.news.naver.com",
@@ -95,14 +97,26 @@ def _parse_article(url: str) -> dict | None:
 
 def collect(keyword: str, naver_client_id: str, naver_client_secret: str) -> list[dict]:
     items = _search_news(keyword, naver_client_id, naver_client_secret)
+    logger.info("네이버 뉴스 검색 결과: %d건 (keyword=%s)", len(items), keyword)
+
     candidates = _filter_and_limit(items)
+    logger.info(
+        "허용 도메인 필터링 후 %d건 선택됨 (최대 %d건, keyword=%s)", len(candidates), MAX_ARTICLES, keyword
+    )
 
     results = []
     fetched_at = datetime.now(KST).isoformat()
-    for item in candidates:
+    total = len(candidates)
+    for idx, item in enumerate(candidates, start=1):
         parsed = _parse_article(item["link"])
         if parsed is None:
+            logger.info(
+                "[%d/%d] 기사 본문 파싱 실패, 건너뜀 (keyword=%s): %s", idx, total, keyword, item["link"]
+            )
             continue
+        logger.info(
+            "[%d/%d] 기사 본문 파싱 성공 (keyword=%s): %s", idx, total, keyword, item["link"]
+        )
         results.append(
             {
                 "title": parsed["title"],
@@ -112,4 +126,6 @@ def collect(keyword: str, naver_client_id: str, naver_client_secret: str) -> lis
                 "fetched_at": fetched_at,
             }
         )
+
+    logger.info("최종 수집된 기사: %d건 (keyword=%s)", len(results), keyword)
     return results

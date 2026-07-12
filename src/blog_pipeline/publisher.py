@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime
 
@@ -8,17 +9,20 @@ from github import Github
 
 _EXTENSION_PATTERN = re.compile(r"\.(jpg|jpeg|png|webp|gif|bmp)($|\?)", re.IGNORECASE)
 _DEFAULT_EXTENSION = "jpg"
+logger = logging.getLogger("blog_pipeline.publisher")
 
 
 def _download_image(image_url: str) -> tuple[bytes, str] | None:
     try:
         response = requests.get(image_url, timeout=10)
         response.raise_for_status()
-    except Exception:
+    except Exception as error:  # noqa: BLE001
+        logger.warning("대표 이미지 다운로드 실패: %s (%s)", image_url, error)
         return None
 
     match = _EXTENSION_PATTERN.search(image_url)
     extension = match.group(1).lower() if match else _DEFAULT_EXTENSION
+    logger.info("대표 이미지 다운로드 성공: %s", image_url)
     return response.content, extension
 
 
@@ -59,12 +63,15 @@ def publish(
 
     client = Github(github_token)
     repo = client.get_repo(f"{github_owner}/{github_repo}")
+    logger.info("GitHub 저장소 연결됨: %s/%s (keyword=%s)", github_owner, github_repo, keyword)
 
     commit_message = f"[Auto] {keyword} 블로그 포스트 - {published_at.strftime('%Y-%m-%d %H:%M')}"
     md_result = repo.create_file(md_path, commit_message, f"# {title}\n\n{body_markdown}")
     commit_sha = md_result["commit"].sha
+    logger.info("마크다운 파일 커밋 완료 (keyword=%s): %s (sha=%s)", keyword, md_path, commit_sha)
 
     if image_bytes is not None and image_path is not None:
         repo.create_file(image_path, commit_message, image_bytes)
+        logger.info("이미지 파일 커밋 완료 (keyword=%s): %s", keyword, image_path)
 
     return {"file_path": md_path, "image_path": image_path, "commit_sha": commit_sha}
