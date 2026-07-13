@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,6 +16,7 @@ ALLOWED_DOMAINS = (
     "https://m.entertain.naver.com",
 )
 MAX_ARTICLES = 5
+MAX_ARTICLE_AGE_DAYS = 3
 
 _SELECTORS = {
     "https://n.news.naver.com": {
@@ -38,7 +40,7 @@ _SELECTORS = {
 def _search_news(keyword: str, client_id: str, client_secret: str) -> list[dict]:
     response = requests.get(
         SEARCH_URL,
-        params={"query": keyword, "display": 30},
+        params={"query": keyword, "display": 30, "sort": "date"},
         headers={
             "X-Naver-Client-Id": client_id,
             "X-Naver-Client-Secret": client_secret,
@@ -49,8 +51,29 @@ def _search_news(keyword: str, client_id: str, client_secret: str) -> list[dict]
     return response.json().get("items", [])
 
 
-def _filter_and_limit(items: list[dict]) -> list[dict]:
-    filtered = [item for item in items if item.get("link", "").startswith(ALLOWED_DOMAINS)]
+def _parse_pub_date(pub_date: str | None) -> datetime | None:
+    if not pub_date:
+        return None
+    try:
+        return parsedate_to_datetime(pub_date)
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_recent(item: dict, now: datetime) -> bool:
+    published_at = _parse_pub_date(item.get("pubDate"))
+    if published_at is None:
+        return True
+    return now - published_at <= timedelta(days=MAX_ARTICLE_AGE_DAYS)
+
+
+def _filter_and_limit(items: list[dict], now: datetime | None = None) -> list[dict]:
+    now = now or datetime.now(KST)
+    filtered = [
+        item
+        for item in items
+        if item.get("link", "").startswith(ALLOWED_DOMAINS) and _is_recent(item, now)
+    ]
     return filtered[:MAX_ARTICLES]
 
 
@@ -101,7 +124,11 @@ def collect(keyword: str, naver_client_id: str, naver_client_secret: str) -> lis
 
     candidates = _filter_and_limit(items)
     logger.info(
-        "허용 도메인 필터링 후 %d건 선택됨 (최대 %d건, keyword=%s)", len(candidates), MAX_ARTICLES, keyword
+        "허용 도메인 및 최근 %d일 이내 필터링 후 %d건 선택됨 (최대 %d건, keyword=%s)",
+        MAX_ARTICLE_AGE_DAYS,
+        len(candidates),
+        MAX_ARTICLES,
+        keyword,
     )
 
     results = []

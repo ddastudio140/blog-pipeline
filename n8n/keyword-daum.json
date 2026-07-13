@@ -1,0 +1,1288 @@
+{
+  "name": "auto-blog copy",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "=body",
+              "cssSelector": "div._article_content"
+            },
+            {
+              "key": "title",
+              "cssSelector": "meta[property=\"og:title\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            },
+            {
+              "key": "imge",
+              "cssSelector": "div._article_content img",
+              "returnValue": "attribute",
+              "attribute": "src"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b8b3eda4-0c45-4a23-856a-3030abbe465d",
+      "name": "html_naver_entertainment",
+      "position": [
+        2048,
+        304
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "22b7ff71-c5ce-4702-9e1e-e5017909476e",
+              "leftValue": "={{ $json.keyword }}",
+              "rightValue": "no_keyword",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "ae614b9a-2308-4147-b734-9dc7e71b95ec",
+              "leftValue": "={{ $json.keyword }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        640,
+        112
+      ],
+      "id": "a6f00601-d16e-4b38-b555-0dbf40ec312f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ddastudio140"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "blog-post"
+        },
+        "filePath": "=posts/{{ $now.format('yyyyMMdd') }}/{{ $now.format('HHmm') }}_no_keyword.md",
+        "fileContent": "=No new keywords were found for this cycle.",
+        "commitMessage": "=[Auto] No target keywords found - {{ $now.format('yyyy-MM-dd HH:mm') }}"
+      },
+      "id": "a5503560-b14d-4434-82ba-40f50a315a50",
+      "name": "github_no_keyword",
+      "position": [
+        576,
+        384
+      ],
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "webhookId": "d40ad324-9b6f-49f8-957d-169cf3b7566b",
+      "credentials": {
+        "githubApi": {
+          "id": "bu1WQr2mbQSjA9SD",
+          "name": "ddatudio140"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const inputData = $input.first()?.json || {};\nlet keyword = inputData.body?.keyword || inputData.keyword;\n\nif (!keyword || keyword.trim().length === 0) {\n  keyword = \"no_keyword\";\n} else {\n  keyword = keyword.trim();\n}\n\nreturn {\n  keyword: keyword,\n  source: 'webhook',\n  status: (keyword === \"no_keyword\") ? \"no_keyword\" : \"success\"\n};"
+      },
+      "id": "f03d3643-f0ca-4ae0-922e-d63f95b5409e",
+      "name": "code_webhook_payload",
+      "position": [
+        -704,
+        320
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "blog-keyword",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "id": "4cf54759-a80e-4ae3-8c55-5dab1bc26cd7",
+      "name": "webhook_trigger",
+      "position": [
+        -880,
+        320
+      ],
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "webhookId": "ce0dab0d-8dd3-4559-a94a-778e66ba2817",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "zuj4RLVYBr4ivGO0",
+          "name": "Blog API Key"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "9fdb88b4-3b68-4006-bb0c-b1503d792f96",
+      "name": "merge_parsed",
+      "position": [
+        2336,
+        96
+      ],
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "body",
+              "cssSelector": "._article_content"
+            },
+            {
+              "key": "title",
+              "cssSelector": "h2"
+            },
+            {
+              "key": "imge",
+              "cssSelector": "meta[property=\"og:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "26120eed-4440-41db-a9bc-d0ef99452c83",
+      "name": "html_naver_sports",
+      "position": [
+        2048,
+        112
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('limit_9_items').item.json.link }}",
+                    "rightValue": "https://n.news.naver.com/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "107cdd17-0224-4445-9d5e-a2fde252d9aa"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "n.news"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "910f87eb-79e3-407b-9f60-33b3cb36f579",
+                    "leftValue": "={{ $('limit_9_items').item.json.link }}",
+                    "rightValue": "https://m.sports.naver.com/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "s.news"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "93e09c0b-72d8-48dd-aa5c-9cd842c30d87",
+                    "leftValue": "={{ $('limit_9_items').item.json.link }}",
+                    "rightValue": "https://m.entertain.naver.com/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "e.news"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "134f82e1-c44d-4289-845e-e6c9d8bc7f8d",
+      "name": "switch_news_type",
+      "position": [
+        1808,
+        96
+      ],
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "2be2a40f-b655-4b12-aa5f-aa3ed8f70a96",
+      "name": "merge_keyword_source",
+      "position": [
+        336,
+        96
+      ],
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "id": "8d28c505-c41c-4704-bfd8-12fdb4c76889",
+      "name": "cron_hourly",
+      "position": [
+        -896,
+        -96
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (!items || items.length === 0) throw new Error('입력 데이터 없음');\nconst html = items[0].json.data;\n\nconst match = html.match(/window\\.tillerInitData\\s*=\\s*(\\{[\\s\\S]*?\\});\\s*\\n/);\nif (!match) throw new Error('tillerInitData not found');\n\nconst tillerData = JSON.parse(match[1]);\n\nconst findKeywords = (obj) => {\n  if (!obj || typeof obj !== 'object') return null;\n  if (obj.uiType === 'REALTIME_TREND_TOP' && obj.contents?.data?.keywords) {\n    return obj.contents.data.keywords;\n  }\n  for (const val of Object.values(obj)) {\n    const result = findKeywords(val);\n    if (result) return result;\n  }\n  return null;\n};\n\nconst keywords = findKeywords(tillerData);\nif (!keywords) throw new Error('keywords not found');\n\nreturn keywords.map(item => ({\n  json: {\n    rank: item.displayRank,\n    keyword: item.keyword,\n    status: item.status,\n    source: 'auto'\n  }\n}));"
+      },
+      "id": "d866f0f1-2262-4081-a70a-d5918182caa6",
+      "name": "code_select_keyword",
+      "position": [
+        -544,
+        -96
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\n\n// -----------------------------------------------------------\n// 1. 기본 데이터 및 키워드 준비\n// -----------------------------------------------------------\nconst inputData = $input.first()?.json?.data || [];\nconst keyword = $node[\"merge_keyword_source\"].json.keyword;\n// 파일명에 쓸 수 있도록 공백을 언더바(_)로 치환\nconst safeKeyword = keyword ? keyword.replace(/ /g, '_') : 'no_keyword';\n\n// -----------------------------------------------------------\n// 2. 날짜 및 시간 계산 (KST 기준)\n// -----------------------------------------------------------\nconst date = new Date();\nconst kstOffset = 9 * 60; // UTC+9\nconst kstDate = new Date(date.getTime() + (kstOffset * 60 * 1000));\n\nconst yyyy = kstDate.getUTCFullYear();\nconst mm = String(kstDate.getUTCMonth() + 1).padStart(2, '0');\nconst dd = String(kstDate.getUTCDate()).padStart(2, '0');\nconst HH = String(kstDate.getUTCHours()).padStart(2, '0');\nconst MM = String(kstDate.getUTCMinutes()).padStart(2, '0');\n\n// 예: 20260125\nconst dateDir = `${yyyy}${mm}${dd}`;\n\n// -----------------------------------------------------------\n// 3. 디렉토리 생성 및 파일 경로 설정\n// -----------------------------------------------------------\nconst baseDir = '/home/node/blog-posts';\nconst targetDir = `${baseDir}/${dateDir}`; // /home/node/blog-posts/20260125\n\n// 🌟 핵심: 디렉토리가 없으면 생성 (이미 있으면 무시)\ntry {\n  execSync(`mkdir -p ${targetDir}`);\n} catch (e) {\n  console.error(`Failed to create directory: ${targetDir}`, e);\n}\n\n// 소스 파일명: 1430_서울_부동산_sources.json\nconst sourceFileName = `${HH}${MM}_${safeKeyword}_sources.json`;\nconst tempFilePath = `${targetDir}/${sourceFileName}`;\n\n// -----------------------------------------------------------\n// 4. JSON 파일 저장\n// -----------------------------------------------------------\nconst articles = inputData.map((item, index) => ({\n  번호: index + 1,\n  제목: item.title || '제목 없음',\n  본문: item.body || '본문 없음',\n  이미지: item.imge || ''\n}));\n\nconst articlesJson = JSON.stringify(articles, null, 2);\n\n// 지정한 경로에 바로 저장\nexecSync(`cat > \"${tempFilePath}\"`, { input: articlesJson });\n\n\n// -----------------------------------------------------------\n// 5. 이미지 경로 및 기타 정보 반환 (다음 노드용)\n// -----------------------------------------------------------\nconst mainImageUrl = articles[0]?.이미지 || '';\nlet extension = 'jpg';\nif (mainImageUrl) {\n  const match = mainImageUrl.match(/\\.(jpg|jpeg|png|webp|gif|bmp)($|\\?)/i);\n  if (match) extension = match[1].toLowerCase();\n}\n\n// 이미지 파일명도 동일한 규칙 적용 (1430_서울_부동산.jpg)\nconst imageFileName = `${HH}${MM}_${safeKeyword}.${extension}`;\nconst localImageFullPath = `${targetDir}/${imageFileName}`;\nconst repoImageFilePath = `posts/${dateDir}/${imageFileName}`;\n\nreturn {\n  // 기존 출력 유지\n  articles,\n  articleCount: articles.length,\n  mainImageUrl,\n  imageExtension: extension,\n  safeKeyword,\n  \n  // 🌟 업데이트된 경로 정보\n  tempFilePath,       // Gemini가 읽을 소스 파일 경로\n  \n  // 다음 단계(이미지 다운로드 및 업로드)에서 사용할 변수\n  targetDir,          // 저장된 디렉토리\n  localImageFullPath, // 저장할 이미지 전체 경로\n  repoImageFilePath,  // Git에 올릴 때 쓸 상대 경로\n  imageFileName       // 이미지 파일명\n};"
+      },
+      "id": "ce706ee1-886b-4ce2-a5d5-951edca3e4ab",
+      "name": "code_format_data",
+      "position": [
+        2720,
+        96
+      ],
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "id": "a8b3b2eb-b5e9-4e1f-acc0-a25e4e77f31b",
+      "name": "aggregate_all",
+      "position": [
+        2544,
+        96
+      ],
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "body",
+              "cssSelector": "#dic_area"
+            },
+            {
+              "key": "title",
+              "cssSelector": "#title_area"
+            },
+            {
+              "key": "imge",
+              "cssSelector": "meta[property=\"og:image\"]",
+              "returnValue": "attribute",
+              "attribute": "content"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "43ceeebc-7bfa-441a-a2cf-54291c49103e",
+      "name": "html_naver_general",
+      "position": [
+        2048,
+        -64
+      ],
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "options": {}
+      },
+      "id": "7f8d1524-00b2-42f1-9ca6-d1f6d4f5690d",
+      "name": "http_get_body",
+      "position": [
+        1616,
+        112
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b70915d1-e43c-415f-a1ce-353f23d59c5a",
+              "leftValue": "={{ $json.link }}",
+              "operator": {
+                "operation": "startsWith",
+                "type": "string"
+              },
+              "rightValue": "https://n.news.naver.com"
+            },
+            {
+              "id": "9efe2237-b56a-4a49-945a-d13fd100cb9f",
+              "leftValue": "={{ $json.link }}",
+              "operator": {
+                "operation": "startsWith",
+                "type": "string"
+              },
+              "rightValue": "https://m.sports.naver.com"
+            },
+            {
+              "id": "f5dc19be-dc83-4ffd-b24c-43cfb8da7ce6",
+              "leftValue": "={{ $json.link }}",
+              "rightValue": "https://m.entertain.naver.com/",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "3e8f3f6a-5824-4f2c-89ec-3e7178f32789",
+      "name": "filter_naver_link",
+      "position": [
+        1264,
+        112
+      ],
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "owner": {
+          "__rl": true,
+          "mode": "list",
+          "value": "ddastudio140"
+        },
+        "repository": {
+          "__rl": true,
+          "mode": "list",
+          "value": "blog-post"
+        },
+        "filePath": "=currensee/posts/{{ $now.format('yyyyMMdd') }}/{{ $now.format('HHmm') }}_{{ $('merge_keyword_source').first().json.keyword }}.md",
+        "fileContent": "={{ $json.stdout }}",
+        "commitMessage": "=[Auto] {{ $('merge_keyword_source').first().json.keyword }} 블로그 포스트 - {{ $now.format('yyyy-MM-dd HH:mm') }}"
+      },
+      "id": "e509317a-d1de-48a6-bcaf-a7d3215eb64b",
+      "name": "github_upload",
+      "position": [
+        3088,
+        96
+      ],
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "webhookId": "79ba6b56-f7f7-4c51-8855-07bc22305328",
+      "credentials": {
+        "githubApi": {
+          "id": "bu1WQr2mbQSjA9SD",
+          "name": "ddatudio140"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "items",
+        "options": {}
+      },
+      "id": "9a8a57b2-12d4-4d94-989b-a12145c16b48",
+      "name": "split_items",
+      "position": [
+        1088,
+        112
+      ],
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "url": "https://openapi.naver.com/v1/search/news.json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "={{ $json.keyword }}"
+            },
+            {
+              "name": "display",
+              "value": "30"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Naver-Client-Id",
+              "value": "U9eXLzBScrp310K0M3ET"
+            },
+            {
+              "name": "X-Naver-Client-Secret",
+              "value": "KRgWwRNsMs"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "702548d6-529b-4b79-a175-7ed97b589727",
+      "name": "http_naver_search",
+      "position": [
+        912,
+        112
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "017b54f4-daba-420d-bfd1-608a1d8ff54c",
+              "name": "keyword",
+              "type": "string",
+              "value": "백안관 만찬 총격"
+            },
+            {
+              "id": "af2f017f-8a14-4bd7-900b-4622d0218a86",
+              "name": "source",
+              "value": "manual",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "28d2f4da-3c85-4c9b-9ed5-8c26378656b9",
+      "name": "set_manual_keyword",
+      "position": [
+        -608,
+        -608
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {},
+      "id": "efd79370-0a79-43a7-b63e-c086c510ce36",
+      "name": "manual_start",
+      "position": [
+        -880,
+        112
+      ],
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s",
+          "mode": "list",
+          "cachedResultName": "Blog Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1308320614,
+          "mode": "list",
+          "cachedResultName": "keyword",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s/edit#gid=1308320614"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -384,
+        -368
+      ],
+      "id": "20ab042a-9847-4e46-a58f-325094a47a90",
+      "name": "sheets_get_used_keywords",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "joNmDWrfrTIFhYjd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 사용된 키워드 목록\nconst usedKeywords = $('sheets_get_used_keywords').all()\n  .map(item => item.json.keyword?.toLowerCase().trim())\n  .filter(k => k);\n\n// 입력된 트렌드 키워드에서 중복 제거\nconst allKeywords = $('code_select_keyword').all();\n\nconst filtered = allKeywords.filter(item => {\n  const keyword = item.json.keyword?.toLowerCase().trim();\n  return !usedKeywords.includes(keyword);\n});\n\nif (filtered.length === 0) throw new Error('사용 가능한 새 키워드가 없습니다');\n\nreturn filtered;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        -96
+      ],
+      "id": "fb87cd72-cb54-4030-b5d5-6cca9651dd7f",
+      "name": "code_filter_keywords"
+    },
+    {
+      "parameters": {
+        "jsCode": "// rank 1 키워드 선택 (없으면 첫 번째)\nconst items = $input.all();\nconst sorted = items.sort((a, b) => a.json.rank - b.json.rank);\nreturn [sorted[0]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        -96
+      ],
+      "id": "47f17a21-7fd9-4597-9d35-c3cfdea84f7f",
+      "name": "code_pick_keyword"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s",
+          "mode": "list",
+          "cachedResultName": "Blog Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1308320614,
+          "mode": "list",
+          "cachedResultName": "keyword",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s/edit#gid=1308320614"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyyMMdd') }}",
+            "keyword": "={{ $json.keyword }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "keyword",
+              "displayName": "keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "used_at",
+              "displayName": "used_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        48,
+        -96
+      ],
+      "id": "3e6d6eda-ec8a-46fe-a3da-b09db469ca5c",
+      "name": "sheets_save_keyword",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "joNmDWrfrTIFhYjd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://www.daum.net/",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "34a6ee6e-d935-4a0b-a3fe-826b110e67aa",
+      "name": "http_daum_trend",
+      "position": [
+        -704,
+        -96
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s",
+          "mode": "list",
+          "cachedResultName": "Blog Automation",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1308320614,
+          "mode": "list",
+          "cachedResultName": "keyword",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MUNw3XCB9DU3ewNrD52JuzdXr231XMUm-LrHjNFAD7s/edit#gid=1308320614"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "date": "={{ $now.format('yyyyMMdd') }}",
+            "keyword": "={{ $json.keyword }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "keyword",
+              "displayName": "keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "used_at",
+              "displayName": "used_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -368,
+        320
+      ],
+      "id": "297e93b2-1421-419b-8a58-100d8ccac346",
+      "name": "sheets_save_webhook_keyword",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "joNmDWrfrTIFhYjd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ab315838-ffe4-4c98-b95b-becfc70051ac",
+              "leftValue": "={{ $json.keyword }}",
+              "rightValue": "no_keyword",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        320
+      ],
+      "id": "b97b2959-1257-4d98-a513-d6b279f75f8b",
+      "name": "filter_valid_webhook_keyword"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5c4723f-2cdd-44c3-8231-f655f9462a4f",
+              "name": "keyword",
+              "value": "삼성 노조 총파업",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -672,
+        112
+      ],
+      "id": "db1e3840-f26c-4f39-a765-ff243a75df99",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "maxItems": 9
+      },
+      "id": "a17ec83b-3215-476d-9b61-76b2ba6d9595",
+      "name": "limit_9_items",
+      "position": [
+        1440,
+        112
+      ],
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "command": "=echo \"\" | claude -p \"아래는 뉴스 데이터입니다:\\n$(cat {{ $json.tempFilePath }})\\n위 뉴스 데이터를 기반으로 블로그 글을 작성해주세요.\""
+      },
+      "id": "3d479182-6d14-4a24-8ced-2bcbd273a78a",
+      "name": "cmd_claude_gen",
+      "position": [
+        2912,
+        96
+      ],
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "split_items1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "http_naver_search1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split_items1": {
+      "main": [
+        [
+          {
+            "node": "filter_naver_link1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cron_hourly1": {
+      "main": [
+        [
+          {
+            "node": "http_daum_trend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html_naver_entertainment": {
+      "main": [
+        [
+          {
+            "node": "merge_parsed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "github_no_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "http_naver_search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code_webhook_payload": {
+      "main": [
+        [
+          {
+            "node": "filter_valid_webhook_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "webhook_trigger": {
+      "main": [
+        [
+          {
+            "node": "code_webhook_payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_parsed": {
+      "main": [
+        [
+          {
+            "node": "aggregate_all",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html_naver_sports": {
+      "main": [
+        [
+          {
+            "node": "merge_parsed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "switch_news_type": {
+      "main": [
+        [
+          {
+            "node": "html_naver_general",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "html_naver_sports",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "html_naver_entertainment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_keyword_source": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cron_hourly": {
+      "main": [
+        [
+          {
+            "node": "http_daum_trend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code_select_keyword": {
+      "main": [
+        [
+          {
+            "node": "sheets_get_used_keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code_format_data": {
+      "main": [
+        [
+          {
+            "node": "cmd_claude_gen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregate_all": {
+      "main": [
+        [
+          {
+            "node": "code_format_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "html_naver_general": {
+      "main": [
+        [
+          {
+            "node": "merge_parsed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "http_get_body": {
+      "main": [
+        [
+          {
+            "node": "switch_news_type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filter_naver_link": {
+      "main": [
+        [
+          {
+            "node": "limit_9_items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split_items": {
+      "main": [
+        [
+          {
+            "node": "filter_naver_link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "http_naver_search": {
+      "main": [
+        [
+          {
+            "node": "split_items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_manual_keyword": {
+      "main": [
+        []
+      ]
+    },
+    "manual_start": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sheets_get_used_keywords": {
+      "main": [
+        [
+          {
+            "node": "code_filter_keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code_filter_keywords": {
+      "main": [
+        [
+          {
+            "node": "code_pick_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code_pick_keyword": {
+      "main": [
+        [
+          {
+            "node": "sheets_save_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "http_daum_trend": {
+      "main": [
+        [
+          {
+            "node": "code_select_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sheets_save_keyword": {
+      "main": [
+        [
+          {
+            "node": "merge_keyword_source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sheets_save_webhook_keyword": {
+      "main": [
+        [
+          {
+            "node": "merge_keyword_source",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "filter_valid_webhook_keyword": {
+      "main": [
+        [
+          {
+            "node": "sheets_save_webhook_keyword",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "github_upload": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "merge_keyword_source",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "limit_9_items": {
+      "main": [
+        [
+          {
+            "node": "http_get_body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cmd_claude_gen": {
+      "main": [
+        [
+          {
+            "node": "github_upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Seoul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true
+  },
+  "versionId": "4d70f915-eaf7-4357-8b56-3f1d28686632",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb0e79e7a9c8f52194a84235b02c5ec18a4ceb826bb02bff0e66711cd41ed027"
+  },
+  "id": "r1J9m5PioPdLP9Tx",
+  "tags": []
+}

@@ -1,6 +1,10 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
 from blog_pipeline import news_collector
+
+KST = timezone(timedelta(hours=9))
+NOW = datetime(2026, 7, 12, 23, 0, 0, tzinfo=KST)
 
 
 def test_filter_and_limit_keeps_only_allowed_domains_and_top_5():
@@ -88,6 +92,44 @@ def test_collect_combines_search_and_parse(monkeypatch):
     assert result[0]["title"] == "제목"
     assert result[0]["link"] == "https://n.news.naver.com/1"
     assert "fetched_at" in result[0]
+
+
+def test_filter_and_limit_excludes_articles_older_than_max_age():
+    items = [
+        {"link": "https://n.news.naver.com/1", "pubDate": "Sun, 12 Jul 2026 20:00:00 +0900"},  # 3시간 전, 허용
+        {"link": "https://n.news.naver.com/2", "pubDate": "Wed, 08 Jul 2026 20:00:00 +0900"},  # 4일 전, 제외
+    ]
+
+    result = news_collector._filter_and_limit(items, now=NOW)
+
+    assert [item["link"] for item in result] == ["https://n.news.naver.com/1"]
+
+
+def test_filter_and_limit_keeps_article_without_pub_date():
+    items = [{"link": "https://n.news.naver.com/1"}]
+
+    result = news_collector._filter_and_limit(items, now=NOW)
+
+    assert len(result) == 1
+
+
+def test_is_recent_boundary_within_max_age_days():
+    just_inside = {"pubDate": "Thu, 09 Jul 2026 23:01:00 +0900"}  # 정확히 3일 이내
+    just_outside = {"pubDate": "Thu, 09 Jul 2026 22:59:00 +0900"}  # 3일 초과
+
+    assert news_collector._is_recent(just_inside, NOW) is True
+    assert news_collector._is_recent(just_outside, NOW) is False
+
+
+def test_search_news_requests_date_sorted_results():
+    with patch("blog_pipeline.news_collector.requests.get") as mock_get:
+        mock_get.return_value.json.return_value = {"items": []}
+        mock_get.return_value.raise_for_status = lambda: None
+
+        news_collector._search_news("천궁", "client-id", "client-secret")
+
+    _, kwargs = mock_get.call_args
+    assert kwargs["params"]["sort"] == "date"
 
 
 def test_collect_skips_articles_that_fail_to_parse():
